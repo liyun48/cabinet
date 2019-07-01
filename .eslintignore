@@ -1,0 +1,11 @@
+build/*.js
+config/*.js
+src/assets
+src/pages/alarm
+src/pages/monitor
+src/views/login
+src/pages/alarm
+src/pages/message
+src/pages/system
+src/pages/index
+src/components

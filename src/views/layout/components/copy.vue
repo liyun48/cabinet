@@ -6,7 +6,7 @@
 
 <style scoped>
   span{
-    background-color: #0f1a2c;
+    background-color: #fff;
     color: #68add8
   }
 </style>

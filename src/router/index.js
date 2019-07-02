@@ -144,24 +144,7 @@ export const asyncRouterMap = [
   //   component: () => import('@/pages/video/Layout'),
   //   hidden: true
   // },
-  // 站内信
-  {
-    path: '/message',
-    component: Layout,
-    redirect: 'noredirect',
-    // hidden: true,
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/pages/message/Layout'),
-        name: 'message',
-        meta: {
-          title: '站内信',
-          icon: 'email'
-        }
-      }
-    ]
-  },
+
   // 机柜监控
   {
     path: '/monitor/allMonitor',
@@ -184,7 +167,7 @@ export const asyncRouterMap = [
     path: '/monitor/detail',
     component: Layout,
     redirect: 'noredirect',
-    hidden: true,
+    // hidden: true,
     children: [
       {
         path: 'index',
@@ -192,6 +175,24 @@ export const asyncRouterMap = [
         name: 'detail',
         meta: {
           title: '机柜详情',
+          icon: 'email'
+        }
+      }
+    ]
+  },
+  // 站内信
+  {
+    path: '/message',
+    component: Layout,
+    redirect: 'noredirect',
+    // hidden: true,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/pages/message/Layout'),
+        name: 'message',
+        meta: {
+          title: '站内信息',
           icon: 'email'
         }
       }
@@ -208,7 +209,7 @@ export const asyncRouterMap = [
         component: () => import('@/pages/alarm/Layout'),
         name: 'alarm',
         meta: {
-          title: '报警信息',
+          title: '报警管理',
           icon: 'clipboard'
         }
       }

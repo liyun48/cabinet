@@ -105,7 +105,7 @@ export default {
   height: 50px;
   line-height: 50px;
   border-radius: 0px !important;
-  background-color:#0f1a2c;
+  background-color:#fff;
   .hamburger-container {
     line-height: 58px;
     height: 50px;

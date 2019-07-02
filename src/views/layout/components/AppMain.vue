@@ -82,12 +82,12 @@ section::-webkit-scrollbar-track {/*滚动条里面轨道*/
   /* min-height: calc(100% - 102px); */
   width: 100%;
   position: relative;
-  background-color: #0f1a2c;
+  background-color: #fff;
   overflow: hidden;
   color: #666666;
 }
 .logo{
-  background-color: #0f1a2c;
+  background-color: #fff;
   width: 100%;
   text-align: center;
   color: #68add8;
@@ -95,7 +95,7 @@ section::-webkit-scrollbar-track {/*滚动条里面轨道*/
   bottom: 0;
   line-height: 40px;
   box-sizing: border-box;
-  border-top: 1px solid #2a506e;
+  border-top: 1px solid #ededed;
   z-index: 9999;
 }
 </style>

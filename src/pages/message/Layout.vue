@@ -1,6 +1,6 @@
 <template>
   <div class="message">
-    站内信
+    站内信息
   </div>
 </template>
 

@@ -32,7 +32,70 @@
       <el-button type="primary" plain size="mini" class="one" @click="addMessage()">发布</el-button>
       <el-button type="primary" plain size="mini" class="one" @click="dealAll()">批量已读</el-button>
       <!-- <el-button type="primary" plain size="mini" class="one" @click="delAll()">批量删除</el-button> -->
-   
+   <div class="表格标题">
+   <el-table
+      :data="tableData"
+      :header-cell-style="{}"
+      :row-style="{background:'#0f1a2c'}"
+      :height="tblHeight"
+      style="width: 100%"
+      size="mini"
+      @selection-change="handleSelectionChange">
+      <el-table-column
+        type="selection"
+        width="55"
+        align="center"/>
+      <el-table-column
+        type="expand"
+        label="详情"
+        width="120"
+        align="center">
+        <template slot-scope="props">
+          <el-form label-position="left" inline class="demo-table-expand">
+            <el-form-item label="发布内容">
+              <span>{{ props.row.mess_text }}</span>
+            </el-form-item><br>
+            <el-button type="primary" plain size="mini" @click="Read(props.row)">已读</el-button>
+          </el-form>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="mess_send"
+        label="发布人"
+        width="120"
+        align="center"/>
+      <el-table-column
+        prop="mess_time"
+        label="发布时间"
+        width="200"
+        align="center"/>
+      <el-table-column
+        prop="mess_title"
+        label="发布标题"
+        align="center"
+        width="180"/>
+      <el-table-column
+        prop="mess_text"
+        label="发布内容"
+        align="center"/>
+      <el-table-column
+        prop="mess_status"
+        label="状态"
+        align="center"
+        width="120"/>
+      <el-table-column
+        label="操作"
+        fixed="right"
+        width="120"
+        align="center">
+        <template slot-scope="{row}">
+          <i class="el-icon-delete" title="删除" @click="delMessage(row)" />
+          <!-- <i class="fa fa-eye" title="阅读" @click="allRead(row)" /> -->
+        </template>
+      </el-table-column>
+    </el-table>
+    </div>
+    
 </template>
   </div>
 </template>
@@ -41,8 +104,14 @@
 
 
 <script>
+import $ from 'jquery'
+import service from '@/utils/request'
+
+
 export default {
+
   data() {
+
     return {
        options: [{
           value: '1',
@@ -51,6 +120,9 @@ export default {
           value: '2',
           label: '未读'
         }],
+         tableData: [],
+        multipleSelection: [],
+        idss: [],
         value: '',
         pickerOptions: {
           shortcuts: [{
@@ -114,8 +186,6 @@ export default {
     }
   }
 </script>
-
-
 
 
 

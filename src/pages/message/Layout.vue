@@ -108,7 +108,44 @@
         添加模态框  
         
         -->
-
+<el-dialog :title="addDialog.title" :visible.sync="addDialog.visible" width="25%" center="" label-position="left">
+      <el-form ref="addDialog.form" :model="addDialog.from" label-width="80px" size="mini">
+      <el-form-item :label-width="formLabelWidth" label="标题" prop="title">
+          <el-input v-model="addDialog.form.title" autocomplete="off" size="mini"/>
+        </el-form-item>
+        <el-form-item :label-width="formLabelWidth" label="内容" prop="text">
+          <el-input v-model="addDialog.form.text" autocomplete="off" size="mini" type="textarea"/>
+        </el-form-item>
+        <el-form-item :label-width="formLabelWidth" label="部门">
+          <el-select v-model="dep0" placeholder="请选择部门" multiple style="width:100%">
+            <el-option v-for="item in data1" :key="item.id" :label="item.label" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label-width="formLabelWidth" label="部门">
+          <el-select v-model="dep1" placeholder="请选择部门" multiple style="width:100%">
+            <el-option v-for="item in data2" :key="item.id" :label="item.label" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label-width="formLabelWidth" label="部门">
+          <el-select v-model="dep2" placeholder="请选择部门" multiple style="width:100%">
+            <el-option v-for="item in data3" :key="item.id" :label="item.label" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label-width="formLabelWidth" label="用户">
+          <el-select v-model="allUsers" placeholder="请选择用户" size="mini" multiple style="width:100%"> 
+            <el-option v-for="item in users" :key="item.id" :label="item.last_name" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <div slot="footer" class="dialog-footer" style="height:30px">
+        <el-button size="mini" @click="addDialog.visible = false">取 消</el-button>
+        <el-button type="primary" size="mini" @click="saveMessage('addDialog.form')">确 定</el-button>
+      </div>
+      </el-form>
+      <div slot="footer" class="dialog-footer" style="height:30px">
+        <el-button size="mini" @click="addDialog.visible = false">取 消</el-button>
+        <el-button type="primary" size="mini" @click="saveMessage('addDialog.form')">确 定</el-button>
+      </div>
+    </el-dialog>
 
     </div>
 </template>
@@ -149,10 +186,48 @@ export default {
               end_time:''
             },
         time:[], 
+        // 模态框
+      formLabelWidth: '50px',
+      addDialog: {
+        title: '',
+        visible: false,
+        form: {
+          title:'',
+          text:''
+        }
+      },
+      dep1: [],
+      allQX: [],
+      // 存放所有的部门
+      data1: [],
+      data2: [],
+      data22: [],
+      data3: [],
+      data33: [],
+      dep0:'',
+      dep1:'',
+      dep2:'',
+      users:[],
+      allUsers:[],
+      // 选中一级部门下的二级部门存放
+      twoDep:[],
+      // 三级人员的存放
+      threeUser:[],
+      rules: {
+        title: [
+          { required: true, message: '请输入站内信标题', trigger: 'blur' },
+          // { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+        ],
+        text: [
+          { required: true, message: '请填写站内信内容', trigger: 'blur' }
+        ]
+      }
       }
     },
     //监听器
      watch: {
+       //时间格式
+
        time: function(){
          if(this.time !== '' && this.time !== null){
            this.params.start_time = this.time[0];
@@ -163,12 +238,41 @@ export default {
          }
          this.fingAllMessage(this.params)
        },
+       //模态框
+       dep1:function(now,old){
+      if(now){
+        this.deal1(now)
+        this.currentID = now
+      }
+    },
+    dep2:function(now,old){
+      if(now){
+        this.deal2(now)
+        this.currentID = now
+      }
+    },
+    dep2:function(now,old){
+      // console.log(now,old)
+      if(now){
+        this.deal3(now)
+        this.currentID = now
+        // console.log('当前id',this.currentID)
+      }
+    },
+    allUsers:function(now,old){
+      if(now){
+        console.log(now)
+        // this.saveUser()
+      }
+    },
+       //分页
        page:function(){},
      },
      //
     created() {
-    this.tblHeight = $(window).height() - 225
-    this.fingAllMessage()
+          this.tblHeight = $(window).height() - 225
+          this.fingAllMessage()
+          this.departmentList()
     },
     methods: {
       //
@@ -208,7 +312,7 @@ export default {
           console.log(vals.val)
           this.multipleSelection = val
         },
-    //添加模态框
+    
     // 查看部门列表
     departmentList() {
       service.get('/api_department/department_list/').then((data) => {
@@ -248,6 +352,50 @@ export default {
 
       })
     },
+    //添加模态框
+        //存放用户
+        saveUser(now){},
+        //通过部门，获得用户
+        deal1(now){
+          this.data22=[]
+          const data222=[]
+          this.data1.map((item)=>{
+            now.map((items)=>{
+              if(items === items.id){
+                this.data22.push
+              }
+            })
+          })
+           this.data22.map((item)=>{
+        data222.push(item.children)
+        })
+        // console.log('二级部门data22',data222)
+        this.data2 = []
+        data222.map((item)=>{
+          item.map((item)=>{
+            this.data2.push(item)
+          })
+        })
+         const users1 = []
+        this.twoDep = []
+       this.dep1.map((item)=>{
+        now.map((items)=>{
+          if(items===item.id){
+            users1.push(item.user_names)
+            this.twoDep.push(item.subs)
+          }
+        })
+      })
+      this.users = []
+      users1.map((item)=>{
+        if(item.length > 0){
+          item.map((item)=>{
+            this.users.push(item)
+          })
+        }
+      })
+
+                  },
       //单独处理时间函数
       dealDisabledDate (time) {
       // time.getTime是把选中的时间转化成自1970年1月1日 00:00:00 UTC到当前时间的毫秒数
@@ -366,7 +514,7 @@ export default {
       } else {
         this.$message({
           showClose: true,
-          message: '请选择需要设置的站内信',
+          message: '请选择需要设置的站内信息',
           type: 'error'
         })
       }

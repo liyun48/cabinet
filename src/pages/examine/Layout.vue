@@ -56,7 +56,7 @@
         width="150">
         <template slot-scope="{row}">
           <i class="fa fa-rocket" title="催办" @click="openMessage(row)"/>
-          <i v-if="row.approval_status === '未审批'" class="fa fa-check-square-o" title="审批" @click="toExamine(row)"/>
+          <i v-if="row.approval_status === '未审批'" id="i" class="fa fa-check-square-o" title="审批" @click="toExamine(row)"/>
           <!-- <i  class="fa fa-check-square-o" title="审批" @click="toExamine(row)"/> -->
         </template>
       </el-table-column>
@@ -142,7 +142,8 @@
           prop="start_end"
           label="申请时间"/>
       </el-table>
-      <el-form :model="status.exForm">{{ status.exForm }}
+      <el-form :model="status.exForm">
+        <!-- {{ status.exForm }} -->
         <el-form-item :label-width="formLabelWidth" label="审批内容" >
           <el-input
             :rows="8"
@@ -283,7 +284,8 @@ export default {
       this.$notify({
         title: '催办',
         message: row.approval_user + '申请' + row.approval_text,
-        position: 'bottom-right'
+        position: 'bottom-right',
+        offset: 100
       })
     },
     // 去审批
@@ -358,9 +360,15 @@ export default {
 .tables i:hover{
   cursor: pointer;
 }
-.tables i:last-child {
+/* .tables i:last-child {
   color: #2E5C26;
   margin-left: 15px;
+} */
+#i{
+  color: #2E5C26;
+  margin-left: 15px;
+  font-weight: 700;
+  font-size: 20px;
 }
 .type-select,
 .reason-input,

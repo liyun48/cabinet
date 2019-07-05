@@ -1,7 +1,7 @@
 <template>
   <div class="examine">
     <!-- 审批状态选择器 -->
-    <el-select v-model="status.status_id" clearable placeholder="请选择审批状态" >
+    <el-select v-model="params.status_id" clearable placeholder="请选择审批状态" >
       <el-option
         v-for="item in statusData"
         :key="item.status_id"
@@ -10,7 +10,7 @@
       />
     </el-select>
     <!-- 申请人输入框 -->
-    <el-input v-model="status.last_name" class="input" clearable placeholder="请输入申请人" />
+    <el-input v-model="params.last_name" class="input" clearable placeholder="请输入申请人" />
     <!-- 按钮 -->
     <el-button class="btn" @click="dialogAddFormVisible = true" >申请</el-button><hr >
     <!-- 表格数据 -->
@@ -57,6 +57,7 @@
         <template slot-scope="{row}">
           <i class="fa fa-rocket" title="催办" @click="openMessage(row)"/>
           <i v-if="row.approval_status === '未审批'" class="fa fa-check-square-o" title="审批" @click="toExamine(row)"/>
+          <!-- <i  class="fa fa-check-square-o" title="审批" @click="toExamine(row)"/> -->
         </template>
       </el-table-column>
     </el-table>
@@ -65,21 +66,22 @@
     <div class="page" >
       <el-pagination
         :page-size="20"
-        :total="100"
+        :total="allPages"
         :current-page.sync="status.page"
         layout=" prev, pager, next"
         @current-change="handleCurrentChange"/>
     </div>
 
-    <!-- 模态框 -->
+    <!-- 提交申请模态框 -->
     <el-dialog
       :visible.sync="dialogAddFormVisible"
-      title="提示"
+      title="提交申请"
       width="30%"
       center>
       <el-form :model="status.form">
+        <!-- {{status.form}} -->
         <el-form-item :label-width="formLabelWidth" label="申请类型">
-          <el-select v-model="status.region" class="type-select" placeholder="请选择申请类型">
+          <el-select v-model="status.form.approval_type" class="type-select" placeholder="请选择申请类型">
             <el-option
               v-for="item in typeData"
               :key="item.type_id"
@@ -90,9 +92,10 @@
         </el-form-item>
         <el-form-item :label-width="formLabelWidth" label="申请时间">
           <el-date-picker
-            v-model="status.value1"
+            v-model="status.form.start_end"
             class="time-select"
             type="datetimerange"
+            value-format="yyyy-MM-dd hh:mm:ss"
             range-separator="至"
             start-placeholder="开始时间"
             end-placeholder="结束时间"/>
@@ -100,7 +103,7 @@
         <el-form-item :label-width="formLabelWidth" label="申请原因" >
           <el-input
             :rows="8"
-            v-model="status.textarea"
+            v-model="status.form.approval_text"
             class="reason-input"
             type="textarea"
             placeholder="请输入申请原因"/>
@@ -115,7 +118,7 @@
     <!-- 审批模态框 -->
     <el-dialog
       :visible.sync="dialogExamineFormVisible"
-      title="提示"
+      title="处理申请"
       width="60%"
       center>
       <el-table
@@ -139,11 +142,11 @@
           prop="start_end"
           label="申请时间"/>
       </el-table>
-      <el-form :model="status.exForm">
+      <el-form :model="status.exForm">{{ status.exForm }}
         <el-form-item :label-width="formLabelWidth" label="审批内容" >
           <el-input
             :rows="8"
-            v-model="status.textarea"
+            v-model="status.exForm.approval_history"
             class="reason-input"
             type="textarea"
             placeholder="请输入审批内容"/>
@@ -151,7 +154,8 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogExamineFormVisible = false">取 消</el-button>
-        <el-button type="primary" plain @click="dialogExamineFormVisible = false">保 存</el-button>
+        <el-button @click="toRefuse()">拒 绝</el-button>
+        <el-button type="primary" plain @click="subExanine()">同 意</el-button>
       </div>
     </el-dialog>
 
@@ -169,58 +173,69 @@ export default {
   data() {
     return {
       status: {
-        last_name: '',
-        status_id: '',
-        textarea: '',
-        value1: '',
-        form: '',
-        exForm: {},
-        region: '',
+        // 提交申请表单
+        form: {},
+        // 审批表单
+        exForm: {
+          approval_id: 0,
+          status_id: 0
+        },
+        // 分页
         page: 1
       },
+      // 全部数据
       tableData: [],
+      // 页数
+      allPages: 0,
+      // 单行数据
       rowData: [],
+      // 审批状态
       statusData: [],
+      // 审批类型
       typeData: [],
+      // 表格  单行数据  没有用到
       multipleSelection: [],
+      // 隐藏提交申请模态框
       dialogAddFormVisible: false,
+      // 隐藏审批模态框
       dialogExamineFormVisible: false,
-
-      formLabelWidth: '100px'
+      // form表单宽度
+      formLabelWidth: '100px',
+      // 查询时传给后台数据
+      params: {
+        page: 1
+      }
     }
   },
   watch: {
-    'status.last_name': (newVal, oldVal) => {
-      console.log(newVal)
-      const url = '/api_approval/get_approval_list/?last_name=' + newVal
-      service.get(url).then(({ data }) => {
-        console.log(data.result)
-        // this.tableData = data.result
-      })
-      true
-    },
-    'status.status_id': (newVal, oldVal) => {
-      console.log(newVal)
-      const url = '/api_approval/get_approval_list/?status_id=' + newVal
-      service.get(url).then(({ data }) => {
-        console.log(data.result)
-        // this.tableData = data.result
-      })
-      true
+    // 多用于模糊查询
+    params: {
+      handler: function(now, old) {
+        // console.log('now',now)
+        this.params = now
+        this.findAllExamine(this.params)
+      },
+      deep: true
     }
+    // 监听审批状态
+    // 'status.radio':function(newVal,oldVal){
+    //   this.status.radio = newVal
+    //   console.log(this.status.radio)
+    //   true
+    // },
   },
   created() {
     this.tblHeight = $(window).height() - 220
-    this.findAllExamine()
+    this.findAllExamine(this.params)
     this.findStatus()
     this.findType()
   },
   methods: {
     // 数据渲染
-    findAllExamine() {
-      const url = '/api_approval/get_approval_list/'
-      service.get(url).then(({ data }) => {
+    findAllExamine(params) {
+      service.get('/api_approval/get_approval_list/', { params }).then(({ data }) => {
         this.tableData = data.result
+        this.allPages = data.count
       })
     },
     // 获取审批状态
@@ -239,14 +254,19 @@ export default {
     },
     // 提交申请
     toInsert() {
-      // const url = '/api_approval/create_approval/'
+      service.post('/api_approval/create_approval/', this.status.form).then(() => {
+        console.log('成功')
+      }).catch(() => {
 
-      this.dialogFormVisible = false
-      this.dialogAddFormVisible()
+      })
+      this.status.form = {}
+      this.dialogAddFormVisible = false
+      this.findAllExamine()
     },
-    // 表格
+    // 表格 复选框对应单行数据
     handleSelectionChange(val) {
       this.multipleSelection = val
+      console.log(this.multipleSelection)
     },
     // 分页
     handleCurrentChange(val) {
@@ -266,16 +286,57 @@ export default {
         position: 'bottom-right'
       })
     },
+    // 去审批
     toExamine(row) {
-      // console.log(row.approval_id)
       this.rowData = [row]
-      console.log(this.rowData)
+      console.log(this.rowData[0].approval_id)
       this.dialogExamineFormVisible = true
+    },
+    // 同意审批
+    subExanine() {
+      this.status.exForm.status_id = 1
+      this.status.exForm.approval_id = this.rowData[0].approval_id
+      service.post('/api_approval/approval_deal/', this.status.exForm).then(() => {
+        console.log('成功')
+      }).catch(() => {
+
+      })
+      this.status.exForm = {}
+      this.findAllExamine()
+      this.dialogExamineFormVisible = false
+    },
+    // 拒绝审批
+    toRefuse() {
+      this.status.exForm.status_id = -1
+      this.status.exForm.approval_id = this.rowData[0].approval_id
+      service.post('/api_approval/approval_deal/', this.status.exForm).then(() => {
+        console.log('成功')
+      }).catch(() => {
+
+      })
+      this.status.exForm = {}
+      this.findAllExamine()
+      this.dialogExamineFormVisible = false
     }
+    // 审批拒绝   监听方式
+    // toRefuse(){
+    //   this.status.exForm.approval_history = this.status.extextarea
+    //   this.status.exForm.approval_id = this.rowData[0].approval_id
+    //   this.status.exForm.status_id = -1
+    //   // console.log('a+++++++++++++++++++++++++++++++++++++')
+    //   console.log(this.status.exForm)
+    //   service({
+    //     method: 'post',
+    //     url: '/api_approval/approval_deal/',
+    //     data: this.status.exForm
+    //   })
+    //   this.findAllExamine();
+    //   this.dialogExamineFormVisible = false;
+    //   this.status.extextarea = '';
+    // },
 
   }
 }
-
 </script>
 
 <style scoped>

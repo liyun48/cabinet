@@ -8,7 +8,7 @@
      v-model="queryobj.dep_name"
      size="medium">
     </el-input>
-    <el-select v-model="queryobj.alarm_status" placeholder="请选择报警状态">
+    <el-select v-model="queryobj.alarm_status" placeholder="请选择报警状态" clearable>
     <el-option
       v-for="item in alarmstatus"
       :key="item.status_id"
@@ -93,12 +93,16 @@
     <div class="block">
     <el-pagination
       @current-change="handleCurrentChange"
-      :page-size="10"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="400">
+      :page-size="this.size"     
+      :total="this.count">
     </el-pagination>
   </div>
+
+  <div id="main" style="width: 600px;height:400px;"></div>
    <!-- 模态框 -->
+
+
+     <!--批量处理  -->
       <el-dialog
       :title="batchDelete.title"
       :visible.sync=" batchDelete.visible"
@@ -124,7 +128,7 @@
         </tr>
       </table>
       <hr>
-      {{obj1}}
+    
       <el-input
         type="textarea"
         :rows="2"
@@ -137,7 +141,100 @@
       </span>
     </el-dialog>
 
+     <!-- 去处理 -->
+    <el-dialog
+      :title="deal.title"
+      :visible.sync="deal.visible"
+      width="50%"
+     >
+      <hr>
+      <table class="table">
+        <tr>
+          <td>报警时间</td>
+          <td>报警单位</td>
+          <td>报警机柜</td>
+          <td>报警设备</td>
+          <td>报警原因</td>
+          <td>报警状态</td>
+        <!-- </tr>
+        <tr v-for="(item,index) in  batchDelete.val1" :key="index">
+          <td>{{item.alarm_time}}</td>
+          <td>{{item.dep_name}}</td>
+          <td>{{item.cabinet_name}}</td>
+          <td>{{item.dataitem_code}}</td>
+          <td>{{item.alarm_text}}</td>
+          <td>{{item.status_text}}</td>
+        </tr> -->
+          <tr>
+          <td>{{deal.row.alarm_time}}</td>
+          <td>{{deal.row.dep_name}}</td>
+          <td>{{deal.row.cabinet_name}}</td>
+          <td>{{deal.row.dataitem_code}}</td>
+          <td>{{deal.row.alarm_text}}</td>
+          <td>{{deal.row.status_text}}</td>
+          </tr>
+      </table>
+      <hr>
+      {{deal.obj}}
+      <el-input
+        type="textarea"
+        :rows="2"
+        placeholder="请输入处理记录"
+        v-model="textarea">
+      </el-input>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="batchDelete.visible = false" size="mini">取 消</el-button>
+        <el-button type="primary" @click="toUpDeal" size="mini">确 定</el-button>
+      </span>
+    </el-dialog>
 
+
+     <!-- 去审核 -->
+     <el-dialog
+      :title="sh.title"
+      :visible.sync=" sh.visible"
+       width="50%"
+     >
+      <hr>
+      <table class="table">
+        <tr>
+          <td>报警时间</td>
+          <td>报警单位</td>
+          <td>报警机柜</td>
+          <td>报警设备</td>
+          <td>报警原因</td>
+          <td>报警状态</td>
+        </tr>
+       
+        <!-- <tr v-for="(item,index) in  sh.row" :key="index">
+          <td>{{sh.row.alarm_time}}</td>
+          <td>{{item.dep_name}}</td>
+          <td>{{item.cabinet_name}}</td>
+          <td>{{item.dataitem_code}}</td>
+          <td>{{item.alarm_text}}</td>
+          <td>{{item.status_text}}</td>
+        </tr> -->
+          <tr>
+          <td>{{sh.row.alarm_time}}</td>
+          <td>{{sh.row.dep_name}}</td>
+          <td>{{sh.row.cabinet_name}}</td>
+          <td>{{sh.row.dataitem_code}}</td>
+          <td>{{sh.row.alarm_text}}</td>
+          <td>{{sh.row.status_text}}</td>
+        </tr>
+      </table>
+      <hr>
+      <el-input
+        type="textarea"
+        :rows="2"
+        placeholder="请输入处理记录"
+        v-model="textarea">
+      </el-input>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click=" batchDelete.visible = false" size="mini">取 消</el-button>
+        <el-button type="primary" @click="toUpCheck" size="mini">确 定</el-button>
+      </span>
+    </el-dialog>
 
 
 
@@ -150,7 +247,10 @@
 <script>
 import $ from 'jquery'
 import service from '@/utils/request'
+import echarts from 'echarts'
+
 export default {
+ 
   data(){
     return{
         alarm:[],
@@ -192,19 +292,39 @@ export default {
         batchDelete:{
           visible:false,
           val1:[],
-          title:'',
+          title:'批量处理',
           obj:{
             alarm_ids:[],
             cabinet_ids:[],
             deal_history:''
           }  
         },
+       //-------审核
+        sh:{
+          visible:false,
+          title:'审核',
+          row:''
+        },
         obj1:{
           alarm_id:'',
           audit_history:'',
           audit_status: ''
         },
-          textarea: ''
+      //---------------------
+      //------------------处理---------------------
+       deal:{
+          visible:false,
+          title:'处理',
+          row:'',
+          obj:{
+          alarm_ids:[],
+          cabinet_ids:[],
+          deal_history:''}
+          
+       },
+          textarea: '',
+          count:0,
+          size:20
       
       };
   },
@@ -215,6 +335,9 @@ export default {
     this.findAllAlarm();
     this.findAllAlarmStatus();
   },
+  // mounted(){
+  //   this.draw()
+  // },
   watch:{
       queryobj:{
          handler:function(now,old){
@@ -236,11 +359,31 @@ export default {
       }
   },
   methods: {
+//     draw(){
+
+//       var myChart = echarts.init(document.getElementById('main'))
+//       let option = {
+//     xAxis: {
+//         type: 'category',
+//         data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+//     },
+//     yAxis: {
+//         type: 'value'
+//     },
+//     series: [{
+//         data: [820, 932, 901, 934, 1290, 1330, 1320],
+//         type: 'line'
+//     }]
+// };
+//     myChart.setOption(option)
+//     },
      findAllAlarm(){
       service.get('/api_alarm/get_alarm_list/',{params:this.queryobj})
       .then(({data})=>{
         // console.log(data.result)
         this.alarm = data.result
+        this.count=data.count;
+       
         this.alarm.map((item)=>{
            if(item.alarm_status === 0){
              return item.alarm_status ='未处理' ;
@@ -295,8 +438,10 @@ export default {
       // this.findAllAlarm()
     },
     
+    //去审核------------------------------------------------------------------------------------
     toCheck(row){
-      this.batchDelete.visible=true;
+      this.sh.visible=true;
+      this.sh.row=row;
       console.log(row);
       this.obj1.alarm_id=row.alarm_id;
       // this.obj1.audit_status=row.alarm_status;
@@ -310,23 +455,54 @@ export default {
              return  this.obj1.audit_status=2;
            }
        this.obj1.audit_history=this.textarea;
-       service.post('/api_alarm/audit_alarm/',this.obj1)
+    },
+    toUpCheck(){
+        service.post('/api_alarm/audit_alarm/',this.obj1)
        .then(({code})=>{
-        if(code ===200){
-           row.audit_status=='已审核';
-           this.findAllAlarm();
-        }
+         open();
+          this.findAllAlarm();
+      })
+      .catch(()=>{
+      })
+      this.sh.visible=false;
+    },
+  
+   //------------------------------------------------------------------------------------------------
+    toDeal(row){
+      this.deal.visible=true;
+        this.deal.row=row;
+        console.log(row);
+        this.deal.obj.alarm_ids = [row.alarm_id];
+        this.deal.obj.cabinet_ids =[row.cabinet_id];
+        this.deal.obj.deal_history =this.textarea; 
+    },
+    toUpDeal(){
+      service.post('/api_alarm/process_alarm/',this.deal.obj)
+      .then(({code})=>{
+        this.findAllAlarm();
         
       })
       .catch(()=>{
-        
       })
+      this.deal.visible=false;
+    },
+    //谈框
+        open() {
+        this.$message({
+          showClose: true,
+          message: '操作成功',
+          type: 'success',
+          center: true
+        });
+      }
     }
+}
+//----------------------------------------------------------------------------------------------
     
 
 
-  }
-}
+  
+
 </script>
 
 
@@ -335,25 +511,26 @@ export default {
   display: flex;
 }
 .el-select{
-  flex: 1.5;
-  margin-left: 20px;
+  flex: 3;
+  margin-left: 10px;
 }
 .el-input{
-  flex: 1.5;
+  flex: 3;
 }
 .alarm_btn {
   margin-right: 10px; 
-  flex: 4;
-  margin-left: 150px;
+  flex: 5;
+  margin-left: 40px;
 }
-.one{
+/* .one{
   background-color: #0C1523;
-}
+} */
 
 
 .block{
   text-align: right;
-  margin-left: 20px;
+  margin-left: 10px;
+  
 }
 
 

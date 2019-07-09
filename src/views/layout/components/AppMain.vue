@@ -13,16 +13,34 @@
       版权所有 @2019 昆山鸣泽信息科技有限公司
     </div>
     <!-- 催办 -->
+    <div v-show="handleList.length != 0 && showHandle === true" class="handle" >
+      <!-- <div class="handle" title="催办" > -->
+      <span>催办<i class="el-icon-close" title="关闭" @click="showHandle = false" /></span>
+      <ul>
+        <li v-for="item in handleList" :key="item.approval_id">
+          {{ item.user_name }}将于{{ item.start_end }}申请
+          <br >
+          <span class="span-reason">{{ item.approval_text }}</span>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script>
 import $ from 'jquery'
+import service from '@/utils/request'
 export default {
   name: 'AppMain',
   data() {
     return {
-      conheight: ''
+      conheight: '',
+      // 催办列表
+      handleList: [],
+      // 显示于隐藏
+      showHandle: true,
+      // 定时器
+      timer: null
     }
   },
   computed: {
@@ -35,6 +53,23 @@ export default {
   },
   created() {
     this.conheight = 'height:' + ($(window).height() - 125) + 'px;overflow-y:auto;'
+    this.getHandle()
+  },
+  mounted() {
+    this.timer = setInterval(() => {
+      this.showHandle = true
+    }, 30000)
+  },
+  updated() {
+    this.getHandle()
+  },
+  methods: {
+    // 获取催办信息
+    getHandle() {
+      service.get('/api_approval/get_cuiban/').then(({ data }) => {
+        this.handleList = data.result
+      })
+    }
   }
 }
 </script>
@@ -98,6 +133,49 @@ section::-webkit-scrollbar-track {/*滚动条里面轨道*/
   box-sizing: border-box;
   border-top: 1px solid #ededed;
   z-index: 9999;
+}
+.handle{
+  padding: 10px;
+  width: 470px;
+  height: 30%;
+  background-color: #fff;
+  border: 1px solid#eee;
+  position: fixed;
+  bottom: 85px;
+  right: 30px;
+}
+
+.handle > ul{
+  color: #333;
+  list-style: none;
+  width: 100%;
+  height: 90%;
+  overflow-y:scroll;
+  word-wrap: break-word;
+  line-height: 1.5em;
+}
+
+.handle > ul > li{
+  margin-bottom: 5px;
+}
+
+.handle > span{
+  font-size: 20px;
+}
+
+.el-icon-close{
+  position: relative;
+  left: 85%;
+  font-size: 16px;
+}
+
+.el-icon-close:hover{
+  cursor: pointer;
+}
+
+.span-reason{
+  color: black;
+  font-weight: bolder;
 }
 </style>
 

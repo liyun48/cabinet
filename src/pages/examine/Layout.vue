@@ -56,7 +56,7 @@
         align="center"
         width="150">
         <template slot-scope="{row}">
-          <i class="fa fa-rocket" title="催办" @click="handle(row)"/>
+          <i v-if="row.approval_status === '未审批'" class="fa fa-rocket" title="催办" @click="handle(row)"/>
           <!-- <i class="fa fa-rocket" title="催办" @click="showHandle()"/> -->
           <i v-if="row.approval_status === '未审批'" id="i" class="fa fa-check-square-o" title="审批" @click="toExamine(row)"/>
           <!-- <i  class="fa fa-check-square-o" title="审批" @click="toExamine(row)"/> -->
@@ -147,7 +147,7 @@
           prop="start_end"
           label="申请时间"/>
       </el-table>
-      {{ status.exForm }}
+      <!-- {{ status.exForm }} -->
       <el-form :model="status.exForm">
         <!-- {{ status.exForm }} -->
         <el-form-item :label-width="formLabelWidth" label="审批内容" >
@@ -167,10 +167,12 @@
     </el-dialog>
 
     <!-- 催办 -->
-    <!-- <div class="handle" title="催办">
-      <span>催办</span>
+    <!-- <div class="handle" title="催办" v-show="showHandle === true" >
+      <span>催办<i class="el-icon-close" @click="showHandle = false"  /></span>
       <ul>
-        <li v-for="item in handleList" :key="item.approval_id">{{item}}</li>
+        <li v-for="item in handleList" :key="item.approval_id">
+          {{item.user_name}}将于{{item.start_end}}申请{{item.approval_text}}
+        </li>
       </ul>
     </div> -->
   </div>
@@ -188,7 +190,12 @@ export default {
     return {
       status: {
         // 提交申请表单
-        form: {},
+        form: {
+          approval_type: 0,
+          start_end: '',
+          approval_text: ''
+
+        },
         // 审批表单
         exForm: {
           approval_history: '',
@@ -235,9 +242,11 @@ export default {
       // 催办
       handleId: {
         approval_id: 0
-      },
+      }
       // 催办列表
-      handleList: []
+      // handleList: [],
+      // 显示于隐藏
+      // showHandle:true,
     }
   },
   watch: {
@@ -262,10 +271,10 @@ export default {
     this.findAllExamine(this.params)
     this.findStatus()
     this.findType()
-    this.getHandle()
+    // this.getHandle()
   },
   mounted() {
-    this.showHandle()
+    // this.showHandle()
   },
   methods: {
     // 数据渲染
@@ -301,16 +310,19 @@ export default {
     //   this.openSuccessMsg()
     //   this.findAllExamine()
     // },
-
     toInsert(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           service.post('/api_approval/create_approval/', this.status.form).then(() => {
-            this.openSuccessMsgn()
+            this.openSuccessMsg()
           }).catch(() => {
 
           })
-          this.status.form = {}
+          this.status.form = {
+            approval_type: 0,
+            start_end: '',
+            approval_text: ''
+          }
           this.dialogAddFormVisible = false
           this.findAllExamine()
         } else {
@@ -334,16 +346,6 @@ export default {
         this.tableData = data.result
       })
     },
-    // 消息提示
-    // openMessage(row) {
-    //   console.log(row.approval_user)
-    //   this.$notify({
-    //     title: '催办',
-    //     message: row.approval_user + '申请' + row.approval_text,
-    //     position: 'bottom-right',
-    //     offset: 100
-    //   })
-    // },
     // 添加催办
     handle(row) {
       console.log(row.approval_id)
@@ -366,7 +368,10 @@ export default {
       this.status.exForm.status_id = 1
       this.status.exForm.approval_id = this.rowData[0].approval_id
       service.post('/api_approval/approval_deal/', this.status.exForm).then(() => {
-        console.log('成功')
+        this.$message({
+          message: '同意申请',
+          type: 'success'
+        })
       }).catch(() => {
 
       })
@@ -384,7 +389,10 @@ export default {
       this.status.exForm.status_id = -1
       this.status.exForm.approval_id = this.rowData[0].approval_id
       service.post('/api_approval/approval_deal/', this.status.exForm).then(() => {
-        console.log('成功')
+        this.$message({
+          message: '拒绝申请',
+          type: 'success'
+        })
       }).catch(() => {
 
       })
@@ -414,7 +422,7 @@ export default {
     //   this.status.extextarea = '';
     // },
     // 申请成功提示
-    openSuccessMsgn() {
+    openSuccessMsg() {
       this.$message({
         message: '添加申请成功',
         type: 'success'
@@ -431,18 +439,6 @@ export default {
     resetForm(formName) {
       this.$refs[formName].resetFields()
       this.dialogAddFormVisible = false
-    },
-    // 获取催办信息
-    getHandle() {
-      service.get('/api_approval/get_cuiban/').then(({ data }) => {
-        console.log(data.result)
-        this.handleList = data.result
-        console.log(this.handleList)
-      })
-    },
-    // 展示催办信息
-    showHandle() {
-      console.log('show')
     }
   }
 }
@@ -467,10 +463,7 @@ export default {
 .tables i:hover{
   cursor: pointer;
 }
-/* .tables i:last-child {
-  color: #2E5C26;
-  margin-left: 15px;
-} */
+
 #i{
   color: #2E5C26;
   margin-left: 15px;

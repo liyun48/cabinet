@@ -30,9 +30,9 @@
     </el-date-picker>
      </div>
   <div class="alarm_btn">
-    <el-button class="one" type="warning" @click="batchDelete.visible = true">批量处理</el-button>
-    <el-button class="one" type="warning">查看统计</el-button>
-    <el-button class="one" type="warning">导出</el-button>
+    <el-button class="one"  @click="batchDelete.visible = true">批量处理</el-button>
+    <el-button class="one" @click="toCheck">查看统计</el-button>
+    <el-button class="one"  @click=" exportAlarm">导出</el-button>
   </div>
   </div>
   <!-- 加入表格 -->
@@ -44,6 +44,20 @@
     :data="alarm"
     style="width: 100%"
     @selection-change="handleSelectionChange">
+    <el-table-column
+      type="expand"
+      >
+      <template slot-scope="props">
+        <el-form label-position="left" inline class="demo-table-expand">
+          <el-form-item label="处理记录">
+            <span>{{ props.row.deal_history }}</span>
+          </el-form-item>
+          <el-form-item label="审核记录">
+            <span>{{ props.row.audit_history }}</span>
+          </el-form-item>
+        </el-form>
+      </template>
+    </el-table-column>
     <el-table-column
       type="selection"
       width="55">
@@ -98,10 +112,6 @@
     </el-pagination>
   </div>
 
-  <div id="main" style="width: 600px;height:400px;"></div>
-   <!-- 模态框 -->
-
-
      <!--批量处理  -->
       <el-dialog
       :title="batchDelete.title"
@@ -128,7 +138,6 @@
         </tr>
       </table>
       <hr>
-    
       <el-input
         type="textarea"
         :rows="2"
@@ -175,7 +184,6 @@
           </tr>
       </table>
       <hr>
-      {{deal.obj}}
       <el-input
         type="textarea"
         :rows="2"
@@ -236,8 +244,20 @@
       </span>
     </el-dialog>
 
-
-
+    <!-- 统计模态框 -->
+      <el-dialog
+        title="查看统计"
+        :visible.sync="tongji.visible"
+         width="50%">
+      <el-tabs tab-position="left" style="height:400px;">
+      <el-tab-pane label="报警状态统计">
+         <div id="status" style="width:100%;height:400px" ></div>
+      </el-tab-pane>
+      <el-tab-pane label="报警设备统计">
+        <div id="type" style="width:700px;height:400px"></div>
+      </el-tab-pane>
+      </el-tabs>
+    </el-dialog>
   </div>
   </div>
 </template>
@@ -320,8 +340,14 @@ export default {
           alarm_ids:[],
           cabinet_ids:[],
           deal_history:''}
-          
        },
+    //-----------统计----------------
+     tongji:{
+        visible:false,
+        alarmStatus:[],
+        alarmDevice:[]
+
+     },
           textarea: '',
           count:0,
           size:20
@@ -334,10 +360,9 @@ export default {
     this.tblHeight = $(window).height() - 220
     this.findAllAlarm();
     this.findAllAlarmStatus();
+    this.findAllStatistics();
   },
-  // mounted(){
-  //   this.draw()
-  // },
+ 
   watch:{
       queryobj:{
          handler:function(now,old){
@@ -399,10 +424,42 @@ export default {
 
       })
      },
+     // 导出
+    exportAlarm(){
+      this.$confirm('将导出搜索的结果,确认要导出么？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      .then(()=>{
+        delete this.queryobj.page
+        let str = $.param(this.queryobj)
+        // console.log(str)
+        let url = 'http://192.168.50.50:9999/api_alarm/export_alarm_list/?'+str
+        // console.log(url)
+        window.location.href=url
+        this.$message({
+          showClose: true,
+          message: '正在下载...',
+          type: 'success'
+        })
+      })
+      .catch(()=>{
+        this.$message({
+          showClose: true,
+          message: '导出失败',
+          type: 'error'
+        })
+      })
+    },
      //获取所有警告的状态
      findAllAlarmStatus(){
        service.get('/api_alarm/get_alarm_status/')
        .then(({data})=>{
+         let a =data.result;
+         a.map((item)=>{
+           console.log(item.name);
+         })
          this.alarmstatus=data.result;
        }).catch(()=>{
 
@@ -442,7 +499,7 @@ export default {
     toCheck(row){
       this.sh.visible=true;
       this.sh.row=row;
-      console.log(row);
+      // console.log(row);
       this.obj1.alarm_id=row.alarm_id;
       // this.obj1.audit_status=row.alarm_status;
          if(row.alarm_status === '未处理'){
@@ -467,7 +524,7 @@ export default {
       this.sh.visible=false;
     },
   
-   //------------------------------------------------------------------------------------------------
+   //---------------------------去处理---------------------------------------------------------------------
     toDeal(row){
       this.deal.visible=true;
         this.deal.row=row;
@@ -494,17 +551,123 @@ export default {
           type: 'success',
           center: true
         });
+      },
+
+   //----------------统计---------------------------------------
+    findAllStatistics(){
+      service.get('/api_alarm/get_alarm_statistics/')
+      .then(({data})=>{
+         console.log(data.status);
+       
+         console.log(data.device);
+         this.tongji.alarmStatus = data.status;
+         this.tongji.alarmDevice = data.device;
+        
+      })
+    },
+   
+   toCheck(){
+      this.tongji.visible=true;
+      // this.drawAlarmStatus()
+      setTimeout(()=>{
+      this.drawAlarmStatus();
+      this.drawAlarmDevice();
+    },100)
+   },
+      
+     // 报警状态
+    drawAlarmStatus(){
+      let name = this.tongji.alarmStatus.map((item)=>{
+        return item.name
+      })
+      let data = this.tongji.alarmStatus.map((item)=>{
+        return {
+          value: item.count,
+          name: item.name
+        }
+      })
+      console.log(name,data)
+      let myChart = echarts.init(document.getElementById('status'))
+      let option = {
+        tooltip : {
+          trigger: 'item',
+          formatter: "{a} <br/>{b} : {c} ({d}%)"
+        },
+        
+        color:['#dd6b66','#759aa0','#e69d87'],
+        legend: {
+         orient: 'vertical',
+         left: 'left',
+          data:data
+        },
+        series : [
+          {
+            name: '报警统计',
+            type: 'pie',
+            radius : '55%',
+            center: ['50%', '40%'],
+            data:data,
+            itemStyle: {
+              emphasis: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }
+        ]
       }
+      myChart.setOption(option)
+    },
+      // 报警设备
+    drawAlarmDevice(){
+      let type= this.tongji.alarmDevice.map((item)=>{
+        return item.name
+      })
+      let data = this.tongji.alarmDevice.map((item)=>{
+        return {
+          value: item.count,
+          name: item.name
+        }
+      })
+      console.log(name,data)
+      let myChart = echarts.init(document.getElementById('type'))
+      let option = {
+        tooltip : {
+          trigger: 'item',
+          formatter: "{a} <br/>{b} : {c} ({d}%)"
+        },
+        
+        color:['#dd6b66','#759aa0','#e69d87'],
+        legend: {
+         orient: 'vertical',
+         left: 'left',
+          data:type
+        },
+        series : [
+          {
+            name: '报警统计',
+            type: 'pie',
+            radius : '55%',
+            center: ['50%', '40%'],
+            data:data,
+            itemStyle: {
+              emphasis: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }
+        ]
+      }
+      myChart.setOption(option)
     }
 }
+}
+
 //----------------------------------------------------------------------------------------------
-    
-
-
-  
-
 </script>
-
 
 <style scoped>
 .top{
@@ -522,16 +685,9 @@ export default {
   flex: 5;
   margin-left: 40px;
 }
-/* .one{
-  background-color: #0C1523;
-} */
-
 
 .block{
   text-align: right;
   margin-left: 10px;
-  
 }
-
-
 </style>

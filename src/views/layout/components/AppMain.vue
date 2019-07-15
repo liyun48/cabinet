@@ -143,6 +143,7 @@ section::-webkit-scrollbar-track {/*滚动条里面轨道*/
   position: fixed;
   bottom: 85px;
   right: 30px;
+  z-index: 200;
 }
 
 .handle > ul{

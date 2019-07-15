@@ -2,13 +2,16 @@
   <div class="alarm">
      <!-- 模糊查询 -->
   <div class="top">
-  
+    <div class="kuang">
+     
     <el-input
      placeholder="请输入所属单位"
      v-model="queryobj.dep_name"
-     size="medium">
+     size="mini">
     </el-input>
-    <el-select v-model="queryobj.alarm_status" placeholder="请选择报警状态" clearable>
+   
+     
+    <el-select   size="mini"  v-model="queryobj.alarm_status" placeholder="请选择报警状态" clearable>
     <el-option
       v-for="item in alarmstatus"
       :key="item.status_id"
@@ -16,29 +19,29 @@
       :value="item.status_id">
     </el-option>
     </el-select>
-
-     <div class="block">
+    
      <el-date-picker
+     size="mini"
       v-model="queryobj.time"
       type="datetimerange"
-      :picker-options="pickerOptions2"
+      
       value-format="yyyy-MM-dd HH:mm:ss"
       range-separator="至"
       start-placeholder="开始日期"
       end-placeholder="结束日期"
-      align="right">
+     >
     </el-date-picker>
      </div>
   <div class="alarm_btn">
-    <el-button class="one"  @click="batchDelete.visible = true">批量处理</el-button>
-    <el-button class="one" @click="toCheck">查看统计</el-button>
-    <el-button class="one"  @click=" exportAlarm">导出</el-button>
+     <el-button class="one" size="mini" @click="batchDelete.visible = true" type="primary" plain>批量处理</el-button>
+     <el-button class="one" size="mini" @click="toCheck" type="primary" plain>查看统计</el-button>
+     <el-button class="one" size="mini" @click=" exportAlarm" type="primary" plain>导出</el-button>
   </div>
   </div>
   <!-- 加入表格 -->
   <div>
     <el-table
-    size="small"
+    size="mini"
      :height="tblHeight"
     ref="multipleTable"
     :data="alarm"
@@ -104,7 +107,7 @@
    </el-table-column>
   </el-table>
    <!-- 分页 -->
-    <div class="block">
+    <div class="1">
     <el-pagination
       @current-change="handleCurrentChange"
       :page-size="this.size"     
@@ -276,33 +279,7 @@ export default {
         alarm:[],
         alarmstatus:[],
         value4: '',
-         pickerOptions2: {
-          shortcuts: [{
-            text: '最近一周',
-            onClick(picker) {
-              const end = new Date();
-              const start = new Date();
-              start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
-              picker.$emit('pick', [start, end]);
-            }
-          }, {
-            text: '最近一个月',
-            onClick(picker) {
-              const end = new Date();
-              const start = new Date();
-              start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
-              picker.$emit('pick', [start, end]);
-            }
-          }, {
-            text: '最近三个月',
-            onClick(picker) {
-              const end = new Date();
-              const start = new Date();
-              start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
-              picker.$emit('pick', [start, end]);
-            }
-          }]
-        },
+       
         queryobj:{
           //  dep_name:'', //input框的双向数据绑定
            //select框的双向数据绑定
@@ -669,25 +646,45 @@ export default {
 //----------------------------------------------------------------------------------------------
 </script>
 
-<style scoped>
+<style >
+*{
+  margin: 0;
+  padding: 0;
+}
 .top{
   display: flex;
-}
-.el-select{
-  flex: 3;
-  margin-left: 10px;
-}
-.el-input{
-  flex: 3;
+
 }
 .alarm_btn {
-  margin-right: 10px; 
-  flex: 5;
-  margin-left: 40px;
+  flex: 8;
+  margin-left: 100px;
+ 
+  display: flex;
 }
+.kuang{
+  display: flex;
+  flex: 8;
+  }
 
-.block{
-  text-align: right;
+.kuang > .el-input{
+  flex: 2;
   margin-left: 10px;
 }
+/* .el-input__inner{
+  flex: 2;
+  margin-left: 10px;
+} */
+.kuang > .el-select {
+  flex: 2;
+  margin-left:10px
+}
+.kuang >.el-date-editor{
+  flex:4;
+  margin-left: 10px;
+}
+
+.el-pagination{
+  text-align: right;
+}
+
 </style>
